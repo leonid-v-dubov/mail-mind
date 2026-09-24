@@ -1,6 +1,6 @@
-package de.leonidu.mailmind.mind.mail;
+package de.leonidu.mailmind.mail;
 
-import de.leonidu.mailmind.mind.mail.model.ParsedEmail;
+import de.leonidu.mailmind.mail.model.ParsedEmail;
 
 /**
  * Hook for downstream processing (Kafka → AI agent later).

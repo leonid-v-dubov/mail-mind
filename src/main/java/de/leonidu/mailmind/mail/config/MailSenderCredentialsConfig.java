@@ -1,4 +1,4 @@
-package de.leonidu.mailmind.mind.mail.config;
+package de.leonidu.mailmind.mail.config;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Configuration;

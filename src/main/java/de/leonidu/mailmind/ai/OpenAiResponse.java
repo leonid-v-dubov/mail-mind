@@ -1,4 +1,4 @@
-package de.leonidu.mailmind.mind.ai;
+package de.leonidu.mailmind.ai;
 
 /**
  * One turn of the OpenAI Responses API.

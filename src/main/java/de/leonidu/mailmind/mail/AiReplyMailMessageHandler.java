@@ -1,9 +1,9 @@
-package de.leonidu.mailmind.mind.mail;
+package de.leonidu.mailmind.mail;
 
-import de.leonidu.mailmind.mind.ai.OpenAiResponse;
-import de.leonidu.mailmind.mind.ai.OpenAiResponsesService;
-import de.leonidu.mailmind.mind.ai.SenderChatSessionStore;
-import de.leonidu.mailmind.mind.mail.model.ParsedEmail;
+import de.leonidu.mailmind.ai.OpenAiResponse;
+import de.leonidu.mailmind.ai.OpenAiResponsesService;
+import de.leonidu.mailmind.ai.SenderChatSessionStore;
+import de.leonidu.mailmind.mail.model.ParsedEmail;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;

@@ -1,4 +1,4 @@
-package de.leonidu.mailmind.mind.mail.model;
+package de.leonidu.mailmind.mail.model;
 
 import java.time.Instant;
 import java.util.List;

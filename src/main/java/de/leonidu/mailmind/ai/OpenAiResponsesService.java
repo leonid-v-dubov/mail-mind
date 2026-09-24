@@ -1,18 +1,23 @@
-package de.leonidu.mailmind.mind.ai;
+package de.leonidu.mailmind.ai;
 
-import de.leonidu.mailmind.mind.ai.config.OpenAiProperties;
+import de.leonidu.mailmind.ai.config.OpenAiProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import org.springframework.core.io.Resource;
+import org.springframework.beans.factory.annotation.Value;
 import tools.jackson.databind.JsonNode;
 
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Service
 public class OpenAiResponsesService {
+	@Value("classpath:prompts/medical-correction.txt")
+	private Resource medicalCorrectionPrompt;
 
 	static final String EMAIL_ASSISTANT_INSTRUCTIONS = """
 			You are an email assistant. Write a clear, concise reply to the user's email.
@@ -40,9 +45,17 @@ public class OpenAiResponsesService {
 			throw new IllegalStateException("openai.api-key is not configured");
 		}
 
+		String systemPrompt = null;
+		try {
+			systemPrompt = medicalCorrectionPrompt
+					.getContentAsString(StandardCharsets.UTF_8);
+		} catch (Exception ex) {
+			log.warn("Failed to read medical-correction.txt prompt", ex);
+		}
+
 		Map<String, Object> body = new LinkedHashMap<>();
 		body.put("model", properties.model());
-		body.put("instructions", EMAIL_ASSISTANT_INSTRUCTIONS);
+		body.put("instructions", systemPrompt);//EMAIL_ASSISTANT_INSTRUCTIONS);
 		body.put("input", input);
 		body.put("store", properties.store());
 		if (previousResponseId != null && !previousResponseId.isBlank()) {

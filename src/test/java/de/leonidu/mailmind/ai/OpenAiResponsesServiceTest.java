@@ -1,4 +1,4 @@
-package de.leonidu.mailmind.mind.ai;
+package de.leonidu.mailmind.ai;
 
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.json.JsonMapper;

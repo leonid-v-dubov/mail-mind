@@ -1,7 +1,7 @@
-package de.leonidu.mailmind.mind.mail;
+package de.leonidu.mailmind.mail;
 
-import de.leonidu.mailmind.mind.mail.config.MailImapProperties;
-import de.leonidu.mailmind.mind.mail.model.ParsedEmail;
+import de.leonidu.mailmind.mail.config.MailImapProperties;
+import de.leonidu.mailmind.mail.model.ParsedEmail;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;

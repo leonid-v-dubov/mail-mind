@@ -1,4 +1,4 @@
-package de.leonidu.mailmind.mind.mail;
+package de.leonidu.mailmind.mail;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

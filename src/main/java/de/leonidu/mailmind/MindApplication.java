@@ -1,4 +1,4 @@
-package de.leonidu.mailmind.mind;
+package de.leonidu.mailmind;
 
 import org.springframework.ai.model.openai.autoconfigure.OpenAiAudioSpeechAutoConfiguration;
 import org.springframework.ai.model.openai.autoconfigure.OpenAiAudioTranscriptionAutoConfiguration;
@@ -13,9 +13,6 @@ import org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfigur
 import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
 
 @SpringBootApplication(exclude = {
-		DataSourceAutoConfiguration.class,
-		HibernateJpaAutoConfiguration.class,
-		DataJpaRepositoriesAutoConfiguration.class,
 		OpenAiChatAutoConfiguration.class,
 		OpenAiEmbeddingAutoConfiguration.class,
 		OpenAiImageAutoConfiguration.class,
