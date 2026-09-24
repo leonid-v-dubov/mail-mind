@@ -16,7 +16,9 @@ public record MailImapProperties(
 		Duration pollInterval,
 		boolean markAsSeen,
 		/** Only process messages received within this window (default 1 minute). */
-		Duration maxAge
+		Duration maxAge,
+		/** Monitoring mode: 'idle' for push notifications (default), 'polling' for periodic checks */
+		String mode
 ) {
 	public MailImapProperties {
 		if (port == 0) {
@@ -30,6 +32,9 @@ public record MailImapProperties(
 		}
 		if (maxAge == null) {
 			maxAge = Duration.ofMinutes(1);
+		}
+		if (mode == null || mode.isBlank()) {
+			mode = "idle";
 		}
 	}
 }

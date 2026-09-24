@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @ConditionalOnProperty(prefix = "mail.imap", name = "enabled", havingValue = "true")
+@ConditionalOnProperty(prefix = "mail.imap", name = "mode", havingValue = "polling")
 public class MailInboxPoller {
 
 	private static final Logger log = LoggerFactory.getLogger(MailInboxPoller.class);
