@@ -1,0 +1,44 @@
+mail:
+    imap:
+        host: ${MAIL_IMAP_HOST}
+        port: ${MAIL_IMAP_PORT}
+        username: ${MAIL_IMAP_USERNAME}
+        password: ${MAIL_IMAP_PASSWORD}
+        enabled: true
+        folder: INBOX
+        mark-as-seen: true
+        max-age: 1m
+        poll-interval: 1s
+        ssl: true
+openai:
+    base-url: ${OPENAI_API_URL}
+    api-key: ${OPENAI_API_KEY}
+    model: ${OPENAI_API_MODEL}
+    store: true
+spring:
+    application:
+        name: mind
+    datasource:
+        url: ${DB_URL}
+        username: ${DB_USERNAME}
+        password: ${DB_PASSWORD}
+    jpa:
+        hibernate:
+            ddl-auto: update
+        open-in-view: false
+        properties:
+            hibernate:
+                jdbc:
+                    time_zone: UTC
+    mail:
+        host: ${MAIL_SMTP_HOST}
+        port: ${MAIL_SMTP_PORT}
+        username: ${MAIL_IMAP_USERNAME}
+        password: ${MAIL_IMAP_PASSWORD}
+        properties:
+            mail:
+                smtp:
+                    auth: true
+                    starttls:
+                        enable: true
+                        required: true
