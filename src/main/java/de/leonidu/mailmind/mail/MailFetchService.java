@@ -9,20 +9,15 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.Session;
 import jakarta.mail.Store;
 import jakarta.mail.UIDFolder;
-import jakarta.mail.search.ComparisonTerm;
-import jakarta.mail.search.ReceivedDateTerm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Properties;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 public class MailFetchService {
@@ -31,12 +26,13 @@ public class MailFetchService {
 
 	private final MailImapProperties properties;
 	private final MailMessageHandler messageHandler;
-	/** Highest IMAP UID successfully processed in this JVM process. */
-	private final AtomicLong lastProcessedUid = new AtomicLong(0);
+	private final LastProcessedUidRepository lastProcessedUidRepository;
 
-	public MailFetchService(MailImapProperties properties, MailMessageHandler messageHandler) {
+	public MailFetchService(MailImapProperties properties, MailMessageHandler messageHandler, 
+	                       LastProcessedUidRepository lastProcessedUidRepository) {
 		this.properties = properties;
 		this.messageHandler = messageHandler;
+		this.lastProcessedUidRepository = lastProcessedUidRepository;
 	}
 
 	/**
@@ -51,9 +47,9 @@ public class MailFetchService {
 	}
 
 	/**
-	 * Fetches and parses INBOX messages received within {@link MailImapProperties#maxAge()},
-	 * skipping UIDs already processed in this process.
+	 * Fetches and parses INBOX messages, skipping UIDs already processed.
 	 */
+	@Transactional
 	public List<ParsedEmail> fetchNewMessages() {
 		requireConfigured();
 
@@ -68,7 +64,9 @@ public class MailFetchService {
 
 		Session session = Session.getInstance(sessionProps);
 		List<ParsedEmail> result = new ArrayList<>();
-		Instant cutoff = Instant.now().minus(properties.maxAge());
+		
+		// Get last processed UID from database
+		long lastProcessedUid = getLastProcessedUid();
 
 		try (Store store = session.getStore(protocol)) {
 			log.debug("Connecting to {}:{}/{} as {}", properties.host(), properties.port(), protocol, properties.username());
@@ -82,36 +80,35 @@ public class MailFetchService {
 					throw new IllegalStateException("IMAP folder does not support UIDs: " + properties.folder());
 				}
 
-				Message[] candidates = selectRecentCandidates(folder, cutoff);
+				// Get all messages in the folder
+				Message[] messages = folder.getMessages();
 				log.info(
-						"INBOX messages={}, candidates={}, maxAge={}, cutoff={}, lastProcessedUid={}",
+						"INBOX messages={}, lastProcessedUid={}",
 						folder.getMessageCount(),
-						candidates.length,
-						properties.maxAge(),
-						cutoff,
-						lastProcessedUid.get()
+						lastProcessedUid
 				);
 
-				for (Message message : candidates) {
+				for (Message message : messages) {
 					if (message == null) {
 						continue;
 					}
 					long uid = uidFolder.getUID(message);
-					if (uid <= lastProcessedUid.get()) {
-						continue;
-					}
-					if (!receivedWithinWindow(message, cutoff)) {
-						lastProcessedUid.updateAndGet(current -> Math.max(current, uid));
+					if (uid <= lastProcessedUid) {
 						continue;
 					}
 
 					ParsedEmail email = MimeMessageParser.parse(uidFolder, message);
 					result.add(email);
-					lastProcessedUid.updateAndGet(current -> Math.max(current, uid));
+					lastProcessedUid = uid;
 
 					if (properties.markAsSeen()) {
 						message.setFlag(Flags.Flag.SEEN, true);
 					}
+				}
+				
+				// Save the last processed UID to database
+				if (lastProcessedUid > 0) {
+					saveLastProcessedUid(lastProcessedUid);
 				}
 			}
 			finally {
@@ -132,24 +129,17 @@ public class MailFetchService {
 		return result;
 	}
 
-	/**
-	 * IMAP date search is day-granular, so search with a 1-day cushion and filter by time locally.
-	 */
-	private Message[] selectRecentCandidates(Folder folder, Instant cutoff) throws MessagingException {
-		Date searchSince = Date.from(cutoff.minus(Duration.ofDays(1)));
-		Message[] found = folder.search(new ReceivedDateTerm(ComparisonTerm.GE, searchSince));
-		return found == null ? new Message[0] : found;
+	private long getLastProcessedUid() {
+		return lastProcessedUidRepository.findById(properties.folder())
+				.map(LastProcessedUidEntity::getLastUid)
+				.orElse(0L);
 	}
 
-	private static boolean receivedWithinWindow(Message message, Instant cutoff) throws MessagingException {
-		Date received = message.getReceivedDate();
-		if (received == null) {
-			received = message.getSentDate();
-		}
-		if (received == null) {
-			return false;
-		}
-		return !received.toInstant().isBefore(cutoff);
+	private void saveLastProcessedUid(long uid) {
+		LastProcessedUidEntity entity = lastProcessedUidRepository.findById(properties.folder())
+				.orElse(new LastProcessedUidEntity(properties.folder(), uid));
+		entity.setLastUid(uid);
+		lastProcessedUidRepository.save(entity);
 	}
 
 	private void requireConfigured() {
