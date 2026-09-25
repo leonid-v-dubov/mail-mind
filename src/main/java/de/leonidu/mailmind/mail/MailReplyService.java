@@ -2,25 +2,36 @@ package de.leonidu.mailmind.mail;
 
 import de.leonidu.mailmind.mail.config.MailImapProperties;
 import de.leonidu.mailmind.mail.model.ParsedEmail;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
+import jakarta.mail.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import java.io.ByteArrayOutputStream;
+import java.util.Base64;
+import java.util.Properties;
 
 @Service
 public class MailReplyService {
 
 	private static final Logger log = LoggerFactory.getLogger(MailReplyService.class);
+	private static final String GMAIL_SEND_URL = "https://gmail.googleapis.com/gmail/v1/users/me/messages/send";
 
-	private final JavaMailSender mailSender;
+	private final GmailAuthService gmailAuthService;
 	private final MailImapProperties imapProperties;
+	private final RestTemplate restTemplate;
 
-	public MailReplyService(JavaMailSender mailSender, MailImapProperties imapProperties) {
-		this.mailSender = mailSender;
+	public MailReplyService(GmailAuthService gmailAuthService, MailImapProperties imapProperties, RestTemplate restTemplate) {
+		this.gmailAuthService = gmailAuthService;
 		this.imapProperties = imapProperties;
+		this.restTemplate = restTemplate;
 	}
 
 	public void reply(ParsedEmail original, String body) {
@@ -30,24 +41,45 @@ public class MailReplyService {
 		}
 
 		try {
-			MimeMessage message = mailSender.createMimeMessage();
-			MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
-			helper.setTo(to);
-			helper.setFrom(imapProperties.username());
-			helper.setSubject(replySubject(original.subject()));
-			helper.setText(body, false);
+			String accessToken = gmailAuthService.getAccessToken();
+			String rawMessage = createRawMessage(to, imapProperties.username(), replySubject(original.subject()), body, original.messageId());
+			String base64UrlEncoded = Base64.getUrlEncoder().encodeToString(rawMessage.getBytes());
 
-			if (original.messageId() != null && !original.messageId().isBlank()) {
-				message.setHeader("In-Reply-To", original.messageId());
-				message.setHeader("References", original.messageId());
-			}
-
-			mailSender.send(message);
+			GmailSendRequest request = new GmailSendRequest(base64UrlEncoded);
+			
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_JSON);
+			headers.setBearerAuth(accessToken);
+			
+			HttpEntity<GmailSendRequest> entity = new HttpEntity<>(request, headers);
+			
+			restTemplate.postForObject(GMAIL_SEND_URL, entity, GmailSendResponse.class);
+			
 			log.info("Sent reply to uid={} messageId={} to={}", original.uid(), original.messageId(), to);
 		}
 		catch (Exception ex) {
 			throw new IllegalStateException("Failed to send reply for uid=" + original.uid(), ex);
 		}
+	}
+
+	private String createRawMessage(String to, String from, String subject, String body, String inReplyTo) throws Exception {
+		Properties props = new Properties();
+		Session session = Session.getInstance(props);
+		MimeMessage message = new MimeMessage(session);
+		
+		message.setFrom(new InternetAddress(from));
+		message.setRecipients(jakarta.mail.Message.RecipientType.TO, InternetAddress.parse(to));
+		message.setSubject(subject, "UTF-8");
+		message.setText(body, "UTF-8");
+		
+		if (inReplyTo != null && !inReplyTo.isBlank()) {
+			message.setHeader("In-Reply-To", inReplyTo);
+			message.setHeader("References", inReplyTo);
+		}
+		
+		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+		message.writeTo(outputStream);
+		return outputStream.toString();
 	}
 
 	static String replySubject(String subject) {
@@ -81,4 +113,13 @@ public class MailReplyService {
 		}
 		return from.trim();
 	}
+
+	private record GmailSendRequest(
+		@JsonProperty("raw") String raw
+	) {}
+
+	private record GmailSendResponse(
+		@JsonProperty("id") String id,
+		@JsonProperty("threadId") String threadId
+	) {}
 }

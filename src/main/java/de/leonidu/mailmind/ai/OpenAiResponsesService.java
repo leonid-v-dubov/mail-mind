@@ -4,7 +4,6 @@ import de.leonidu.mailmind.ai.config.OpenAiProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.core.io.Resource;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,8 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-@Service
-public class OpenAiResponsesService {
+public class OpenAiResponsesService implements AiProvider {
 	@Value("classpath:prompts/medical-correction.txt")
 	private Resource medicalCorrectionPrompt;
 
@@ -37,10 +35,16 @@ public class OpenAiResponsesService {
 				.build();
 	}
 
+	@Override
+	public String getProviderName() {
+		return "openai";
+	}
+
 	/**
 	 * @param previousResponseId last response id for this sender chat, or {@code null} to start a new one
 	 */
-	public OpenAiResponse complete(String input, String previousResponseId) {
+	@Override
+	public AiResponse complete(String input, String previousResponseId) {
 		if (properties.apiKey() == null || properties.apiKey().isBlank()) {
 			throw new IllegalStateException("openai.api-key is not configured");
 		}
@@ -84,7 +88,7 @@ public class OpenAiResponsesService {
 		if (id == null || id.isBlank()) {
 			throw new IllegalStateException("OpenAI Responses API returned no response id: " + response);
 		}
-		return new OpenAiResponse(id, text.trim());
+		return new AiResponse(id, text.trim());
 	}
 
 	static String extractResponseId(JsonNode response) {

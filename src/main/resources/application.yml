@@ -7,14 +7,24 @@ mail:
         enabled: true
         folder: INBOX
         mark-as-seen: true
-        max-age: 1m
         poll-interval: 1s
         ssl: true
+        mode: idle
+gmail:
+    client-id: ${GMAIL_CLIENT_ID}
+    client-secret: ${GMAIL_CLIENT_SECRET}
+    refresh-token: ${GMAIL_REFRESH_TOKEN}
+ai:
+    provider: ${AI_PROVIDER:groq}
 openai:
     base-url: ${OPENAI_API_URL}
     api-key: ${OPENAI_API_KEY}
     model: ${OPENAI_API_MODEL}
     store: true
+groq:
+    api-key: ${GROQ_API_KEY}
+    model: ${GROQ_API_MODEL}
+    base-url: ${GROQ_API_URL}
 spring:
     application:
         name: mind
@@ -32,15 +42,3 @@ spring:
                 jdbc:
                     time_zone: Europe/Berlin
                 dialect: org.hibernate.dialect.PostgreSQLDialect
-    mail:
-        host: ${MAIL_SMTP_HOST}
-        port: ${MAIL_SMTP_PORT}
-        username: ${MAIL_IMAP_USERNAME}
-        password: ${MAIL_IMAP_PASSWORD}
-        properties:
-            mail:
-                smtp:
-                    auth: true
-                    starttls:
-                        enable: true
-                        required: true
