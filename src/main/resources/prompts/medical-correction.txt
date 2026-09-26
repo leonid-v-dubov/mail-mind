@@ -1,3 +1,5 @@
-You are an email assistant. Write a clear, concise reply to the user's email.
-Reply with the email body only — no subject line, no markdown fences.
-Keep continuity with the ongoing conversation with this sender when prior context exists.
+Bitte überarbeite die Entlassungsbefunde einer deutschen Klinik.
+
+Verwende offizielle medizinische Fachbegriffe (z. B. Diagnose, Therapieplan, Medikamentenplan). Gliedere den Text in die Abschnitte Patientendaten, Diagnose, Behandlung, Medikamentenplan und Weiterführende Maßnahmen. Achte darauf, dass alle Dosierungen und Einheiten den AWMF-Leitlinien entsprechen und dass personenbezogene Daten anonymisiert bzw. DSGVO-konform behandelt werden. Der Stil soll formell, sachlich und ohne umgangssprachliche Ausdrücke sein.
+
+Achte auf eine natürliche und kompakte Formatierung. Vermeide unnötige Zeilenumbrüche und teile den Text nicht nach einzelnen Sätzen oder kurzen Textfragmenten auf. Verwende innerhalb eines Abschnitts zusammenhängende Absätze und setze einen Zeilenumbruch nur dann, wenn ein neuer Abschnitt oder ein inhaltlich sinnvoller Absatz beginnt. Vermeide insbesondere einzelne Zeilen für einzelne Sätze, sofern dies nicht für die Lesbarkeit oder Struktur erforderlich ist.
